@@ -1,15 +1,11 @@
-from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy import Column, Integer, String, DateTime
+from database import Base
+import datetime
 
-# Chat Request / Response 모델
-class ChatRequest(BaseModel):
-    userid: str
-    situation: str
-    message: str
-    chatid: Optional[str] = None
+class User(Base):
+    __tablename__ = "users"
 
-class ChatResponse(BaseModel):
-    chatid: str
-    response: str
-    message_count: int
-    situation: str
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(100), unique=True, index=True)
+    username = Column(String(50))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

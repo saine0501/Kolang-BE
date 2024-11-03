@@ -6,8 +6,10 @@ from typing import Optional
 from router import *
 
 from sqlalchemy.orm import Session
-from database import *
-import models, schemas
+
+from db.database import engine, get_db
+from db import models
+from db import schemas
 
 models.Base.metadata.create_all(bind=engine)
 

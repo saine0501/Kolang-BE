@@ -3,7 +3,7 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from router import *
+from routes.router import *
 
 from sqlalchemy.orm import Session
 

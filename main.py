@@ -4,12 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from routes.router import *
-
 from sqlalchemy.orm import Session
 
 from db.database import engine, get_db
 from db import models
 from db import schemas
+
+from routes import routes_schemas
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -31,21 +32,8 @@ app.add_middleware(
 async def read_root():
     return {"Hello" : "World"}
 
-# Chat Request / Response 모델
-class ChatRequest(BaseModel):
-    userid: str
-    situation: str
-    message: str
-    chatid: Optional[str] = None
-
-class ChatResponse(BaseModel):
-    chatid: str
-    response: str
-    message_count: int
-    situation: str
-
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+@app.post("/chat", response_model=routes_schemas.ChatResponse)
+async def chat(request: routes_schemas.ChatRequest):
     chatid, response, message_count, actual_situation = get_completion(
         request.userid,
         request.situation,
@@ -53,7 +41,7 @@ async def chat(request: ChatRequest):
         request.chatid
     )
     
-    return ChatResponse(
+    return routes_schemas.ChatResponse(
         chatid=chatid,
         response=response,
         message_count=message_count,

@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Depends
+from fastapi import FastAPI, HTTPException, File, UploadFile, Depends, APIRouter
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from routes.router import *
+
+from routes import api, chat
+
 from sqlalchemy.orm import Session
 
 from db.database import engine, get_db
@@ -13,6 +15,8 @@ from db import schemas
 from routes import routes_schemas
 
 models.Base.metadata.create_all(bind=engine)
+
+router = APIRouter(prefix="/api")
 
 app = FastAPI()
 
@@ -32,9 +36,9 @@ app.add_middleware(
 async def read_root():
     return {"Hello" : "World"}
 
-@app.post("/chat", response_model=routes_schemas.ChatResponse)
-async def chat(request: routes_schemas.ChatRequest):
-    chatid, response, message_count, actual_situation = get_completion(
+@router.post("/ai/chat", response_model=routes_schemas.ChatResponse)
+async def aichat(request: routes_schemas.ChatRequest):
+    chatid, response, message_count, actual_situation = api.get_completion(
         request.userid,
         request.situation,
         request.message,
@@ -48,7 +52,7 @@ async def chat(request: routes_schemas.ChatRequest):
         situation=actual_situation
     )
     
-@app.post("/speech2text")
+@router.post("/ai/speech2text")
 async def stt(file: UploadFile = File(...)):
     if file.filename == '':
         raise HTTPException(status_code=400, detail="음성 파일을 입력해주세요.")
@@ -63,4 +67,7 @@ async def stt(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
     
-    return speech2text(file_path)
+    return api.speech2text(file_path)
+
+app.include_router(router)
+app.include_router(chat.router)

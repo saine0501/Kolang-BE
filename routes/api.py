@@ -72,18 +72,6 @@ def read_prompt(filename):
         prompt = file.read().strip()
     return prompt
 
-# STT 모델 : OpenAI whisper-1
-def speech2text(file_path):
-    audio_file= open(file_path, "rb")
-    transcription = client.audio.transcriptions.create(
-    model="whisper-1", 
-    file=audio_file,
-    language="ko",
-    temperature=0
-    )
-
-    return transcription.text
-
 # Chat 모델 : OpenAI 4o-mini
 def get_completion(userid: str, situation: str, inst: str, chatid: Optional[str] = None):
     data = load_data()

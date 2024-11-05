@@ -1,17 +1,15 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Depends, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, APIRouter
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-from routes import api, chat
-
 from sqlalchemy.orm import Session
 
 from db.database import engine, get_db
-from db import models
-from db import schemas
+from db import models, schemas
 
+from routes import api, chatlist, stt
 from routes import routes_schemas
 
 models.Base.metadata.create_all(bind=engine)
@@ -51,23 +49,7 @@ async def aichat(request: routes_schemas.ChatRequest):
         message_count=message_count,
         situation=actual_situation
     )
-    
-@router.post("/ai/speech2text")
-async def stt(file: UploadFile = File(...)):
-    if file.filename == '':
-        raise HTTPException(status_code=400, detail="음성 파일을 입력해주세요.")
-    
-    # 입력받은 파일 저장
-    file_path = "./voice_file"
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
-    
-    file_path = os.path.join(file_path, file.filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(await file.read())
-    
-    return api.speech2text(file_path)
 
 app.include_router(router)
-app.include_router(chat.router)
+app.include_router(chatlist.router)
+app.include_router(stt.router)

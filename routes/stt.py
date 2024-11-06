@@ -2,12 +2,14 @@
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
 import os
+import platform
+import tempfile
 from openai import OpenAI
 from dotenv import load_dotenv
-import glob
+from contextlib import contextmanager
 
 router = APIRouter(
-    prefix="/ai",
+    prefix="/api/ai",
     tags=["AI"]
 )
 
@@ -15,59 +17,82 @@ router = APIRouter(
 load_dotenv()
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
-# 파일 관리 설정
-MAX_FILES = 5
-FILE_DIR = "././file"
-
 client = OpenAI(api_key = OPENAI_API_KEY)
 
+# 임시 파일 저장 및 삭제
+@contextmanager
+def temporary_file(file: UploadFile):
+    is_windows = platform.system() == 'Windows'
+    
+    if is_windows:
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+    else:
+        tmp = tempfile.NamedTemporaryFile(suffix=os.path.splitext(file.filename)[1])
+    
+    try:
+        # 파일 저장
+        content = file.file.read()
+        tmp.write(content)
+        tmp.flush()
+        
+        # OS가 windows인 경우 처리
+        if is_windows:
+            tmp.close()
+        
+        # 파일 포인터 리셋
+        file.file.seek(0)
+        
+        # 파일 경로 반환
+        yield tmp.name
+        
+    finally:
+        if is_windows:
+            # Windows인 경우 수동 파일 삭제
+            try:
+                if os.path.exists(tmp.name):
+                    os.unlink(tmp.name)
+            except Exception as e:
+                print(f"임시 파일 삭제 중 오류 발생: {e}")
+        else:
+            pass
+
 # STT 모델 : OpenAI whisper-1
-def speech2text(file_path):
-    audio_file= open(file_path, "rb")
-    transcription = client.audio.transcriptions.create(
-    model="whisper-1", 
-    file=audio_file,
-    language="ko",
-    temperature=0
-    )
-
-    return transcription.text
-
-def remove_files():
-    if not os.path.exists(FILE_DIR):
-        os.makedirs(FILE_DIR)
-        return
-    
-    # 디렉토리 내의 모든 파일 목록 가져오기
-    files = glob.glob(os.path.join(FILE_DIR, "*"))
-    
-    # 생성 시간 기준으로 파일 정렬
-    files.sort(key=os.path.getctime)
-    
-    # 최대 파일 개수를 초과하면 오래된 파일부터 삭제
-    while len(files) > MAX_FILES:
-        oldest_file = files.pop(0)
-        try:
-            os.remove(oldest_file)
-        except Exception:
-            print("파일을 삭제할 수 없습니다.")
+async def speech2text(file_path):
+    try:
+        with open(file_path, "rb") as audio_file:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language="ko",
+                temperature=0
+            )
+            return transcription.text
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"STT 처리 중 오류 발생: {str(e)}"
+        )
 
 @router.post("/speech2text")
 async def stt(file: UploadFile = File(...)):
     if file.filename == '':
         raise HTTPException(status_code=400, detail="음성 파일을 입력해주세요.")
     
-    remove_files()
-    
-    # 입력받은 파일 저장
-    file_path = os.path.join(FILE_DIR, file.filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(await file.read())
-    
+    # 허용된 파일 확장자 검사
+    allowed_extensions = {'.wav', '.mp3', '.m4a', '.ogg'}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"지원되지 않는 파일 형식입니다. 지원 형식: {', '.join(allowed_extensions)}"
+        )
+
     try:
-        result = speech2text(file_path)
-        return result
-    except Exception:
-        raise HTTPException(status_code=500, detail="STT를 실행할 수 없습니다.")
-    
+        with temporary_file(file) as temp_path:
+            result = await speech2text(temp_path)
+            return {"result": result}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"파일 처리 중 오류 발생: {str(e)}"
+        )

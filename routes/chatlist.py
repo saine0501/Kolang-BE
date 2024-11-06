@@ -8,10 +8,10 @@ from db.models import ChatList, Message
 
 router = APIRouter(
     prefix="/api",
-    tags=["chatlist"]
+    tags=["Chatlist"]
 )
 
-@router.get("/{userId}", response_model=List[ChatListResponse], description="채팅방 내역 조회")
+@router.get("/chatlist/{userId}", response_model=List[ChatListResponse], description="채팅방 내역 조회")
 async def get_user_chats(userId: str, db: Session = Depends(get_db)):
     # 최근 채팅방 10개 조회
     chats = db.query(ChatList).filter(
@@ -25,7 +25,7 @@ async def get_user_chats(userId: str, db: Session = Depends(get_db)):
     
     return chats
 
-@router.get("/chatlist/{chatId}", response_model=ChatDetailResponse)
+@router.get("/chatlist/detail/{chatId}", response_model=ChatDetailResponse)
 async def get_chat_messages(chatId: str, db: Session = Depends(get_db)):
 
     # chatId에 해당하는 채팅방 정보 조회

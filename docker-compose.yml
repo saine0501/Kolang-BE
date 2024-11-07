@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_STATE=prod
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mysql:8.0.36
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+        - "3306:3306"
+    volumes:
+        - ./db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:

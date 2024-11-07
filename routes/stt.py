@@ -14,7 +14,10 @@ router = APIRouter(
 )
 
 # 환경 변수 로드
-load_dotenv()
+env_state = os.getenv("ENV_STATE", "dev")
+env_file = ".env.prod" if env_state == "prod" else ".env.dev"
+load_dotenv(env_file)
+
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 client = OpenAI(api_key = OPENAI_API_KEY)

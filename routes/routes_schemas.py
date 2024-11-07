@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
+# api.py
+
 # Chat Request / Response 모델
 class ChatRequest(BaseModel):
     user_id: str
@@ -27,7 +29,9 @@ class ChatListResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+# chatlist.py
+
 # Message / ChatDetail Response 모델 (채팅 내역 조회)
 class MessageResponse(BaseModel):
     message_id: int
@@ -47,3 +51,4 @@ class ChatDetailResponse(BaseModel):
     
     class Config:
         from_attributes = True
+

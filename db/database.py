@@ -5,17 +5,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+env_state = os.getenv("ENV_STATE", "dev")
+env_file = ".env.prod" if env_state == "prod" else ".env.dev"
+load_dotenv(env_file)
 
-user = os.getenv("DB_USER")
-passwd = os.getenv("DB_PASSWD")
-host = os.getenv("DB_HOST")
-port = os.getenv("DB_PORT")
-db = os.getenv("DB_NAME")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DB_URL = f'mysql+pymysql://{user}:{passwd}@{host}:{port}/{db}?charset=utf8'
-
-engine = create_engine(DB_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False,autoflush=False, bind=engine)
 Base = declarative_base()
 

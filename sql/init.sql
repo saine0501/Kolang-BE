@@ -1,3 +1,5 @@
+USE kolang;
+
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS chatlist;
 DROP TABLE IF EXISTS messages;

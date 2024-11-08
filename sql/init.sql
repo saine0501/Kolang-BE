@@ -1,8 +1,8 @@
 USE kolang;
 
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS chatlist;
 DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS chatlist;
+DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
     user_id VARCHAR(255) PRIMARY KEY,

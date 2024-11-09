@@ -8,7 +8,7 @@ from db.database import engine, SessionLocal
 def seed_database():
     db = SessionLocal()
     try:
-        # 기존 데이터 삭제 (테스트 데이터를 깨끗한 상태에서 시작하기 위해)
+        # 기존 데이터 삭제
         db.query(Message).delete()
         db.query(ChatList).delete()
         db.query(User).delete()

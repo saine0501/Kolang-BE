@@ -26,6 +26,7 @@ env_file = ".env.prod" if env_state == "prod" else ".env.dev"
 load_dotenv(env_file)
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+PROMPT_PATH = os.environ.get('PROMPT_PATH')
 
 client = OpenAI(api_key = OPENAI_API_KEY)
 
@@ -43,9 +44,7 @@ def get_user_onboarding(db: Session, userid: str):
             detail="User onboarding information not available"
         )
     
-    # onboarding_info가 [level, purpose, age] 형태의 리스트임
-    return user.onboarding_info  # 리스트를 직접 반환
-
+    return user.onboarding_info
 
 # prompt 불러오기
 def read_prompt(filename):
@@ -53,11 +52,42 @@ def read_prompt(filename):
         prompt = file.read().strip()
     return prompt
 
+# 대화 요약 함수
+def summarize_conversation(db: Session, chat_id: str) -> str:
+    # 해당 채팅의 모든 메시지 가져오기
+    messages = db.query(models.Message).filter(
+        models.Message.chat_id == chat_id
+    ).order_by(models.Message.created_at).all()
+    
+    # 메시지들을 하나의 문자열로 변환
+    conversation = "\n".join([
+        f"{'AI' if msg.is_answer else 'User'}: {msg.message}"
+        for msg in messages
+    ])
+    
+    prompt_path = "C:/Users/USER/Desktop/kolang_api/prompts/summary.txt"
+    prompt = read_prompt(prompt_path)
+    
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": conversation}
+    ]
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        temperature=0.3,
+        max_tokens=50
+    )
+    
+    return response.choices[0].message.content
+
 # Chat 모델 : OpenAI 4o-mini
 def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: Optional[str] = None):
     situations = ["go shopping", "talk with friends", "travel", "learn alphabet", "airport"]
     actual_situation = situation
-
+    
+    # random course인 경우 처리
     if situation == "random course":
         if chatid:
             chat = db.query(models.ChatList).filter(models.ChatList.chat_id == chatid).first()
@@ -97,18 +127,17 @@ def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: 
                 detail="대화 제한에 도달했습니다. 새로운 대화를 시작해주세요."
             )
 
-    # 현재 채팅의 메시지 가져오기
+    # 기존 대화 이어가기
     chat_messages = db.query(models.Message).filter(
         models.Message.chat_id == chatid
     ).order_by(models.Message.created_at).all()
 
-    # 사용자 온보딩 정보 가져오기 - 리스트 직접 할당
+    # 온보딩 정보 가져오기
     onboarding_info = get_user_onboarding(db, userid)
-    level, purpose, age = onboarding_info  # 리스트 언패킹
+    level, purpose, age = onboarding_info
 
     # system 프롬프트 불러오기
-    prompt_path = "./prompts/onboarding.txt"
-    prompt = read_prompt(prompt_path)
+    prompt = read_prompt(PROMPT_PATH)
     prompt = prompt.format(
         level=level,
         purpose=purpose,
@@ -154,11 +183,19 @@ def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: 
         is_answer=True
     )
     db.add(assistant_message)
+    
+    # 현재 메시지 수 계산
+    new_message_count = len(chat_messages) + 2
+    
+    # 메시지가 20개(10회)가 되면 요약 생성 및 저장
+    if new_message_count == 20:
+        summary = summarize_conversation(db, chatid)
+        chat = db.query(models.ChatList).filter(models.ChatList.chat_id == chatid).first()
+        chat.summary = summary
+    
     db.commit()
 
-    message_count = db.query(models.Message).filter(
-        models.Message.chat_id == chatid
-    ).count() // 2
+    message_count = new_message_count // 2
 
     return chatid, assistant_response, message_count, actual_situation
 

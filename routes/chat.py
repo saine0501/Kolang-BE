@@ -27,6 +27,7 @@ load_dotenv(env_file)
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 PROMPT_PATH = os.environ.get('PROMPT_PATH')
+SUMMARY_PATH = os.environ.get('SUMMARY_PATH')
 
 client = OpenAI(api_key = OPENAI_API_KEY)
 
@@ -65,8 +66,7 @@ def summarize_conversation(db: Session, chat_id: str) -> str:
         for msg in messages
     ])
     
-    prompt_path = "C:/Users/USER/Desktop/kolang_api/prompts/summary.txt"
-    prompt = read_prompt(prompt_path)
+    prompt = read_prompt(SUMMARY_PATH)
     
     messages = [
         {"role": "system", "content": prompt},

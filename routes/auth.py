@@ -92,3 +92,93 @@ async def get_current_user(
         raise credentials_exception
         
     return user
+
+# 사용자를 구글 로그인 페이지로 리다이렉트
+@router.get("/login")
+async def login(request: Request):
+    redirect_uri = GOOGLE_REDIRECT_URI
+    return await oauth.google.authorize_redirect(
+        request, 
+        redirect_uri,
+        prompt='select_account'  # 계정 선택 화면 표시
+    )
+    
+# 구글 로그인 콜백 처리
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    try:
+        # 구글 토큰 검증 및 사용자 정보 획득
+        token = await oauth.google.authorize_access_token(request)
+        user_info = await oauth.google.userinfo(token=token)
+        email = user_info.get('email')
+        name = user_info.get('name')
+
+        # DB에서 사용자 조회 (deleted_at이 None인 경우만)
+        user = db.query(models.User).filter(
+            models.User.email == email,
+            models.User.deleted_at.is_(None)
+        ).first()
+        
+        # 신규 사용자인 경우 회원가입 진행
+        if not user:
+            user = models.User(
+                user_id=str(uuid.uuid4()),
+                email=email,
+                name=name,
+                created_at=datetime.utcnow(),
+                onboarding=False,
+                onboarding_info=None
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        # JWT 토큰 생성
+        access_token = create_access_token(
+            data={
+                "sub": user.user_id,
+                "email": user.email,
+                "name": user.name
+            }
+        )
+
+        # dev: JSON 응답 반환
+        if env_state == "dev":
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "user_id": user.user_id,
+                    "email": user.email,
+                    "name": user.name,
+                    "onboarding": user.onboarding,
+                    "onboarding_info": user.onboarding_info
+                }
+            }
+        
+        # prod: 프론트엔드로 리다이렉트
+        elif FRONTEND_URL:
+            redirect_url = f"{FRONTEND_URL}/auth/callback?token={access_token}&user_id={user.user_id}"
+            return RedirectResponse(url=redirect_url)
+        
+        # FRONTEND_URL이 설정되지 않은 경우
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Frontend URL not configured"
+            )
+
+    except Exception as e:
+        if env_state == "dev":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to authenticate with Google: {str(e)}"
+            )
+        elif FRONTEND_URL:
+            error_redirect_url = f"{FRONTEND_URL}/auth/error?message=Failed to authenticate with Google"
+            return RedirectResponse(url=error_redirect_url)
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Frontend URL not configured"
+            )

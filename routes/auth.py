@@ -182,3 +182,15 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 status_code=500,
                 detail="Frontend URL not configured"
             )
+
+# 현재 로그인한 사용자 정보 조회
+@router.get("/me")
+async def get_user_info(current_user: models.User = Depends(get_current_user)):
+    return {
+        "user_id": current_user.user_id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "onboarding": current_user.onboarding,
+        "onboarding_info": current_user.onboarding_info,
+        "created_at": current_user.created_at
+    }

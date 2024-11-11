@@ -1,51 +1,94 @@
 # 구글 로그인 구현
 
 import os
-import requests
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-
-# from httpx_oauth.clients.google import GoogleOAuth2
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+from starlette.requests import Request
 from db.database import get_db
-from db import schemas
 from db import models
+from datetime import datetime, timedelta
+from jose import jwt, JWTError
+import uuid
+from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
+from fastapi.responses import RedirectResponse
 
 # 환경 변수 설정
 env_state = os.getenv("ENV_STATE", "dev")
 env_file = ".env.prod" if env_state == "prod" else ".env.dev"
 load_dotenv(env_file)
 
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
-GOOGLE_CALLBACK_URI = "http://localhost:8000/auth/google/callback"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+SECRET_KEY=os.getenv("SECRET_KEY")
+GOOGLE_REDIRECT_URI=os.getenv("GOOGLE_REDIRECT_URI")
+FRONTEND_URL=os.getenv("FRONTEND_URL")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-auth_router = APIRouter(
+router = APIRouter(
     tags=['User'],
-    prefix='/user'
+    prefix='/api/user'
 )
 
-def auth_google(code: str):
+# OAuth2 스키마 정의
+oauth2_schema = OAuth2PasswordBearer(tokenUrl='/token')
+
+# 구글 OAuth 설정 초기화 및 사용자 정보 접근 권한 요청 (email, profile)
+oauth = OAuth(Config(env_file))
+CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+oauth.register(
+    name='google',
+    server_metadata_url=CONF_URL,
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+# 토큰 생성 함수
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# 현재 유저 정보 반환
+async def get_current_user(
+    token: str | None = Depends(oauth2_schema),
+    db: Session = Depends(get_db)
+) -> Optional[models.User]:
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
     try:
-        # google에 access token 요청
-        token_url = f"https://oauth2.googleapis.com/token?client_id={GOOGLE_CLIENT_ID}&client_secret={GOOGLE_CLIENT_SECRET}&code={code}&grant_type=authorization_code&redirect_uri={GOOGLE_CALLBACK_URI}"
-        token_response = requests.post(token_url)
-        if token_response.status_code != 200:
-            raise Exception
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
 
-        # google에 회원 정보 요청
-        access_token = token_response.json()['access_token']
-        user_info = f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
-        user_response = requests.get(user_info)
-        if user_response.status_code != 200:
-            raise Exception
-    except:
-        raise Exception("google oauth error")
-
-    info = user_response.json()
-    # return models.User(
-    #     name=info.get('name'),
-    #     email=info.get('email'),
-    #     created_at=
-    # )
-    return info
+    user = db.query(models.User).filter(
+        models.User.user_id == user_id,
+        models.User.deleted_at.is_(None)
+    ).first()
+    
+    if user is None:
+        raise credentials_exception
+        
+    return user

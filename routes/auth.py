@@ -207,7 +207,7 @@ async def save_onboarding(
         # 온보딩 정보를 JSON 형태로 변환
         onboarding_info = [
             onboarding_data.level,
-            onboarding_data.propose,
+            onboarding_data.purpose,
             onboarding_data.age
         ]
         

@@ -58,5 +58,5 @@ class ChatDetailResponse(BaseModel):
 
 class OnboardingRequest(BaseModel):
     level: str
-    propose: str
+    purpose: str
     age: str

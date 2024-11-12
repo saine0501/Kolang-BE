@@ -19,6 +19,8 @@ class ChatResponse(BaseModel):
     response: str
     message_count: int
     situation: str
+    
+# chatlist.py
 
 # ChatList Response 모델 (채팅방 조회)
 class ChatListResponse(BaseModel):
@@ -30,8 +32,6 @@ class ChatListResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-# chatlist.py
 
 # Message / ChatDetail Response 모델 (채팅 내역 조회)
 class MessageResponse(BaseModel):
@@ -46,6 +46,7 @@ class MessageResponse(BaseModel):
         from_attributes = True
 
 class ChatDetailResponse(BaseModel):
+    user_id: str
     chat_id: str
     summary: str
     messages: List[MessageResponse]

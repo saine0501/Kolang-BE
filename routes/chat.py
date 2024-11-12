@@ -14,6 +14,7 @@ import json
 from db.database import get_db
 from db import models
 from routes import routes_schemas
+from routes.auth import get_current_user
 
 router = APIRouter(
     prefix="/api/ai",
@@ -202,7 +203,8 @@ def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: 
 @router.post("/chat", response_model=routes_schemas.ChatResponse)
 async def aichat(
     request: routes_schemas.ChatRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     chatid, response, message_count, actual_situation = get_completion(
         db,
@@ -213,6 +215,7 @@ async def aichat(
     )
     
     return routes_schemas.ChatResponse(
+        user_id=current_user.user_id,
         chat_id=chatid,
         response=response,
         message_count=message_count,

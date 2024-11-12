@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
-# api.py
+# chat.py
 
 # Chat Request / Response 모델
 class ChatRequest(BaseModel):
@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
     chat_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
+    user_id: str
     chat_id: str
     response: str
     message_count: int

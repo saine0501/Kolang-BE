@@ -143,45 +143,45 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             }
         )
 
-        # dev: JSON 응답 반환
-        if env_state == "dev":
-            return {
-                "access_token": access_token,
-                "token_type": "bearer",
-                "user": {
-                    "user_id": user.user_id,
-                    "email": user.email,
-                    "name": user.name,
-                    "onboarding": user.onboarding,
-                    "onboarding_info": user.onboarding_info
-                }
+        # 응답 데이터
+        response_data = {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "user_id": user.user_id,
+                "email": user.email,
+                "name": user.name,
+                "onboarding": user.onboarding,
+                "onboarding_info": user.onboarding_info
             }
+        }
+
+        # dev: JSON 응답
+        if env_state == "dev":
+            return response_data
         
-        # prod: 프론트엔드로 리다이렉트
-        elif FRONTEND_URL:
-            redirect_url = f"{FRONTEND_URL}/auth/callback?token={access_token}&user_id={user.user_id}"
-            return RedirectResponse(url=redirect_url)
-        
-        # FRONTEND_URL이 설정되지 않은 경우
+        # prod: 프론트엔드로 리다이렉트 or JSON 응답
         else:
-            raise HTTPException(
-                status_code=500,
-                detail="Frontend URL not configured"
-            )
+            if FRONTEND_URL:
+                redirect_url = f"{FRONTEND_URL}/auth/callback?token={access_token}&user_id={user.user_id}"
+                return RedirectResponse(url=redirect_url)
+            else:
+                return response_data
 
     except Exception as e:
+        error_message = f"Failed to authenticate with Google: {str(e)}"
         if env_state == "dev":
             raise HTTPException(
                 status_code=400,
-                detail=f"Failed to authenticate with Google: {str(e)}"
+                detail=error_message
             )
         elif FRONTEND_URL:
-            error_redirect_url = f"{FRONTEND_URL}/auth/error?message=Failed to authenticate with Google"
+            error_redirect_url = f"{FRONTEND_URL}/auth/error?message={error_message}"
             return RedirectResponse(url=error_redirect_url)
         else:
             raise HTTPException(
-                status_code=500,
-                detail="Frontend URL not configured"
+                status_code=400,
+                detail=error_message
             )
 
 # 현재 로그인한 사용자 정보 조회
@@ -231,3 +231,4 @@ async def save_onboarding(
             status_code=500,
             detail=f"온보딩 정보 저장 중 오류가 발생했습니다: {str(e)}"
         )
+ 

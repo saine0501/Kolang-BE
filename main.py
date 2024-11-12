@@ -17,8 +17,6 @@ SECRET_KEY=os.getenv("SECRET_KEY")
 
 models.Base.metadata.create_all(bind=engine)
 
-router = APIRouter(prefix="/api")
-
 app = FastAPI()
 
 origins = [
@@ -45,7 +43,6 @@ app.add_middleware(
 async def read_root():
     return {"Hello" : "World"}
 
-app.include_router(router)
 app.include_router(chatlist.router)
 app.include_router(stt.router)
 app.include_router(chat.router)

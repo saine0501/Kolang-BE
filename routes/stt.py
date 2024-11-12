@@ -1,12 +1,14 @@
 # AI STT 기능 구현
 
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 import os
 import platform
 import tempfile
 from openai import OpenAI
 from dotenv import load_dotenv
 from contextlib import contextmanager
+from db import models
+from routes.auth import get_current_user
 
 router = APIRouter(
     prefix="/api/ai",
@@ -77,12 +79,12 @@ async def speech2text(file_path):
         )
 
 @router.post("/speech2text")
-async def stt(file: UploadFile = File(...)):
+async def stt(file: UploadFile = File(...), current_user: models.User = Depends(get_current_user)):
     if file.filename == '':
         raise HTTPException(status_code=400, detail="음성 파일을 입력해주세요.")
     
-    # 허용된 파일 확장자 검사
-    allowed_extensions = {'.wav', '.mp3', '.m4a', '.ogg'}
+    # 파일 확장자 검사
+    allowed_extensions = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm'}
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in allowed_extensions:
         raise HTTPException(
@@ -93,7 +95,10 @@ async def stt(file: UploadFile = File(...)):
     try:
         with temporary_file(file) as temp_path:
             result = await speech2text(temp_path)
-            return {"result": result}
+            return {
+                "result": result,
+                "user_id": current_user.user_id
+                }
     except Exception as e:
         raise HTTPException(
             status_code=500,

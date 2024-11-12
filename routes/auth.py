@@ -15,6 +15,7 @@ import uuid
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from fastapi.responses import RedirectResponse
+from routes.routes_schemas import OnboardingRequest
 
 # 환경 변수 설정
 env_state = os.getenv("ENV_STATE", "dev")
@@ -194,3 +195,39 @@ async def get_user_info(current_user: models.User = Depends(get_current_user)):
         "onboarding_info": current_user.onboarding_info,
         "created_at": current_user.created_at
     }
+    
+# 온보딩 정보 저장
+@router.post("/start")
+async def save_onboarding(
+    onboarding_data: OnboardingRequest,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        # 온보딩 정보를 JSON 형태로 변환
+        onboarding_info = [
+            onboarding_data.level,
+            onboarding_data.propose,
+            onboarding_data.age
+        ]
+        
+        # 현재 사용자의 온보딩 정보 저장
+        current_user.onboarding = True
+        current_user.onboarding_info = onboarding_info
+        
+        db.commit()
+        db.refresh(current_user)
+        
+        return {
+            "success": True,
+            "user_id": current_user.user_id,
+            "onboarding": current_user.onboarding,
+            "onboarding_info": current_user.onboarding_info
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"온보딩 정보 저장 중 오류가 발생했습니다: {str(e)}"
+        )

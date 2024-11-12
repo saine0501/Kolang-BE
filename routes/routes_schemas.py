@@ -54,3 +54,9 @@ class ChatDetailResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# auth.py
+
+class OnboardingRequest(BaseModel):
+    level: str
+    propose: str
+    age: str

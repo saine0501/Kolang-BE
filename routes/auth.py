@@ -176,7 +176,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 detail=error_message
             )
         elif FRONTEND_URL:
-            error_redirect_url = f"{FRONTEND_URL}/login/redirect/error?message={error_message}"
+            error_redirect_url = f"{FRONTEND_URL}/login/redirect?error={error_message}"
             return RedirectResponse(url=error_redirect_url)
         else:
             raise HTTPException(

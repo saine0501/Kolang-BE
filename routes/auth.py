@@ -163,7 +163,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         # prod: 프론트엔드로 리다이렉트 or JSON 응답
         else:
             if FRONTEND_URL:
-                redirect_url = f"{FRONTEND_URL}/auth/callback?token={access_token}&user_id={user.user_id}"
+                redirect_url = f"{FRONTEND_URL}/login/redirect?token={access_token}&user_id={user.user_id}"
                 return RedirectResponse(url=redirect_url)
             else:
                 return response_data
@@ -176,7 +176,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 detail=error_message
             )
         elif FRONTEND_URL:
-            error_redirect_url = f"{FRONTEND_URL}/auth/error?message={error_message}"
+            error_redirect_url = f"{FRONTEND_URL}/login/redirect/error?message={error_message}"
             return RedirectResponse(url=error_redirect_url)
         else:
             raise HTTPException(

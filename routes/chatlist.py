@@ -51,6 +51,7 @@ async def get_chat_messages(chatId: str, db: Session = Depends(get_db),
     if not messages:
         # 채팅방은 존재하지만 메시지가 없는 경우
         return ChatDetailResponse(
+            user_id=current_user.user_id,
             chat_id=chat.chat_id,
             summary=chat.summary,
             messages=[]

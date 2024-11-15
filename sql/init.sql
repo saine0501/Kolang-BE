@@ -69,26 +69,37 @@ CROSS JOIN
      SELECT 4 UNION ALL SELECT 5) numbers;
 
 INSERT INTO messages (chat_id, user_id, created_at, message, is_answer)
-WITH RECURSIVE message_templates AS (
-    SELECT 1 as msg_order, '안녕하세요' as user_msg, '안녕하세요! 무엇을 도와드릴까요?' as system_msg
-    UNION ALL
-    SELECT 2, '{{situation}}에 대해 물어보고 싶어요', '{{situation}}에 대해 알려드리겠습니다'
-    UNION ALL
-    SELECT 3, '감사합니다', '별말씀을요. 더 궁금한 점 있으시면 언제든 물어보세요!'
-)
-SELECT chat_id, 
-       '908621d3-337c-46b3-a6d0-177c97ede9db',
-       NOW(),
-       REPLACE(user_msg, '{{situation}}', situation),
-       FALSE
-FROM chatlist
-CROSS JOIN message_templates
-UNION ALL
-SELECT chat_id,
-       '908621d3-337c-46b3-a6d0-177c97ede9db',
-       NOW(),
-       REPLACE(system_msg, '{{situation}}', situation),
-       TRUE
-FROM chatlist
-CROSS JOIN message_templates
-ORDER BY chat_id, msg_order;
+SELECT 
+    c.chat_id,
+    c.user_id,
+    NOW(),
+    CASE 
+        WHEN msg_num = 1 THEN '안녕하세요'
+        WHEN msg_num = 2 THEN CONCAT(c.situation, '에 대해 물어보고 싶어요')
+        WHEN msg_num = 3 THEN '감사합니다'
+    END as message,
+    FALSE as is_answer
+FROM chatlist c
+CROSS JOIN (
+    SELECT 1 as msg_num UNION ALL
+    SELECT 2 UNION ALL
+    SELECT 3
+) AS msg_numbers;
+
+INSERT INTO messages (chat_id, user_id, created_at, message, is_answer)
+SELECT 
+    c.chat_id,
+    c.user_id,
+    NOW(),
+    CASE 
+        WHEN msg_num = 1 THEN '안녕하세요! 무엇을 도와드릴까요?'
+        WHEN msg_num = 2 THEN CONCAT(c.situation, '에 대해 알려드리겠습니다')
+        WHEN msg_num = 3 THEN '별말씀을요. 더 궁금한 점 있으시면 언제든 물어보세요!'
+    END as message,
+    TRUE as is_answer
+FROM chatlist c
+CROSS JOIN (
+    SELECT 1 as msg_num UNION ALL
+    SELECT 2 UNION ALL
+    SELECT 3
+) AS msg_numbers

@@ -27,8 +27,11 @@ class ChatList(Base):
     chat_id = Column(String(255), primary_key=True)
     user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False)
     summary = Column(String(255))
-    category = Column(String(255))
+    feedback = Column(String(255))
+    situation = Column(String(255))
     created_at = Column(DateTime(6), nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime(6), nullable=True)
+    active = Column(Boolean, nullable=False, default=True)
     
     user = relationship("User", back_populates="chats")
     messages = relationship("Message", back_populates="chat")

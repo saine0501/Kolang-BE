@@ -27,8 +27,11 @@ class ChatListResponse(BaseModel):
     user_id: str
     chat_id: str
     summary: str
-    category: str
+    feedback: str
+    situation: str
     created_at: datetime
+    completed_at: Optional[datetime] = None
+    active: bool
 
     class Config:
         from_attributes = True
@@ -37,7 +40,6 @@ class ChatListResponse(BaseModel):
 class MessageResponse(BaseModel):
     message_id: int
     chat_id: str
-    user_id: str
     message: Optional[str] = None
     created_at: datetime
     is_answer: bool

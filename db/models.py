@@ -12,7 +12,7 @@ class User(Base):
     user_id = Column(String(255), primary_key=True)
     email = Column(String(255), nullable=False)
     name = Column(String(255))
-    created_at = Column(DateTime(6), nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(6), nullable=False, default=datetime.now)
     deleted_at = Column(DateTime(6), nullable=True)
     onboarding = Column(Boolean, nullable=False, default=False)
     onboarding_info = Column(JSON(String(255)), nullable=True)
@@ -29,7 +29,7 @@ class ChatList(Base):
     summary = Column(String(255))
     feedback = Column(String(255))
     situation = Column(String(255))
-    created_at = Column(DateTime(6), nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(6), nullable=False, default=datetime.now)
     completed_at = Column(DateTime(6), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
     
@@ -43,7 +43,7 @@ class Message(Base):
     message_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False)
     chat_id = Column(String(255), ForeignKey("chatlist.chat_id"), nullable=False)
-    created_at = Column(DateTime(6), nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(6), nullable=False, default=datetime.now)
     message = Column(String(255))
     is_answer = Column(Boolean, nullable=False, default=False)
     

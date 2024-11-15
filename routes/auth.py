@@ -54,7 +54,7 @@ oauth.register(
 # 토큰 생성 함수
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -126,7 +126,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                 user_id=str(uuid.uuid4()),
                 email=email,
                 name=name,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(),
                 onboarding=False,
                 onboarding_info=None
             )

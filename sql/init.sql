@@ -22,8 +22,10 @@ CREATE TABLE chatlist (
     chat_id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     summary VARCHAR(255) NULL,
-    category VARCHAR(255) NULL,
+    feedback VARCHAR(255) NULL,
+    situation VARCHAR(255) NULL,
     created_at TIMESTAMP NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
@@ -38,38 +40,55 @@ CREATE TABLE messages (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
-INSERT INTO users (user_id, email, name, created_at, deleted_at, onboarding, onboarding_info)
+INSERT INTO users (user_id, email, name, created_at, onboarding, onboarding_info)
 VALUES (
-    'test',
-    'test@example.com',
-    'test',
+    '908621d3-337c-46b3-a6d0-177c97ede9db',
+    'saine0501@gmail.com',
+    '빈',
     NOW(),
-    NULL,
     TRUE,
-    JSON_ARRAY('Intermediate', 'culture', '30s')
+    JSON_ARRAY('Intermediate', 'culture', '20s')
 );
 
-INSERT INTO chatlist (chat_id, user_id, summary, category, created_at)
-VALUES
-('chat_1', 'test', '테스트 채팅방 1', 'test', NOW()),
-('chat_2', 'test', '테스트 채팅방 2', 'test', NOW()),
-('chat_3', 'test', '테스트 채팅방 3', 'test', NOW()),
-('chat_4', 'test', '테스트 채팅방 4', 'test', NOW()),
-('chat_5', 'test', '테스트 채팅방 5', 'test', NOW()),
-('chat_6', 'test', '테스트 채팅방 6', 'test', NOW()),
-('chat_7', 'test', '테스트 채팅방 7', 'test', NOW()),
-('chat_8', 'test', '테스트 채팅방 8', 'test', NOW()),
-('chat_9', 'test', '테스트 채팅방 9', 'test', NOW()),
-('chat_10', 'test', '테스트 채팅방 10', 'test', NOW()),
-('chat_11', 'test', '테스트 채팅방 11', 'test', NOW());
+INSERT INTO chatlist (chat_id, user_id, summary, feedback, situation, created_at, active)
+SELECT 
+    CONCAT('chat_', situation, '_', num) as chat_id,
+    '908621d3-337c-46b3-a6d0-177c97ede9db' as user_id,
+    CONCAT(situation, ' 테스트 대화 ', num) as summary,
+    '발음과 어순 교정 필요' as feedback,
+    situation,
+    NOW() as created_at,
+    TRUE as active
+FROM 
+    (SELECT 'shopping' as situation UNION ALL 
+     SELECT 'travel' UNION ALL 
+     SELECT 'airport' UNION ALL 
+     SELECT 'korean_class') situations
+CROSS JOIN
+    (SELECT 1 as num UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL 
+     SELECT 4 UNION ALL SELECT 5) numbers;
 
 INSERT INTO messages (chat_id, user_id, created_at, message, is_answer)
-SELECT 
-    chat_id,
-    'test',
-    NOW(),
-    CONCAT('테스트 메시지 ', message_num),
-    FALSE
-FROM 
-    chatlist
-    CROSS JOIN (SELECT 1 AS message_num UNION SELECT 2 UNION SELECT 3) AS numbers;
+WITH RECURSIVE message_templates AS (
+    SELECT 1 as msg_order, '안녕하세요' as user_msg, '안녕하세요! 무엇을 도와드릴까요?' as system_msg
+    UNION ALL
+    SELECT 2, '{{situation}}에 대해 물어보고 싶어요', '{{situation}}에 대해 알려드리겠습니다'
+    UNION ALL
+    SELECT 3, '감사합니다', '별말씀을요. 더 궁금한 점 있으시면 언제든 물어보세요!'
+)
+SELECT chat_id, 
+       '908621d3-337c-46b3-a6d0-177c97ede9db',
+       NOW(),
+       REPLACE(user_msg, '{{situation}}', situation),
+       FALSE
+FROM chatlist
+CROSS JOIN message_templates
+UNION ALL
+SELECT chat_id,
+       '908621d3-337c-46b3-a6d0-177c97ede9db',
+       NOW(),
+       REPLACE(system_msg, '{{situation}}', situation),
+       TRUE
+FROM chatlist
+CROSS JOIN message_templates
+ORDER BY chat_id, msg_order;

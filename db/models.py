@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from db.database import Base
 from datetime import datetime
@@ -27,7 +27,7 @@ class ChatList(Base):
     chat_id = Column(String(255), primary_key=True)
     user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False)
     summary = Column(String(255))
-    feedback = Column(String(255))
+    feedback = Column(JSON)
     situation = Column(String(255))
     created_at = Column(DateTime(6), nullable=False, default=datetime.now)
     completed_at = Column(DateTime(6), nullable=True)

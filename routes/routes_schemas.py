@@ -8,7 +8,6 @@ from typing import List, Optional
 
 # Chat Request / Response 모델
 class ChatRequest(BaseModel):
-    user_id: str
     situation: str
     message: str
     chat_id: Optional[str] = None
@@ -17,7 +16,6 @@ class ChatResponse(BaseModel):
     user_id: str
     chat_id: str
     response: str
-    message_count: int
     situation: str
     
 # chatlist.py

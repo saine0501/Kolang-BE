@@ -173,9 +173,10 @@ def generate_summary_and_feedback(db: Session, chat_id: str) -> Tuple[str, dict]
         return summary, feedback
 
 # Chat 모델 : OpenAI 4o-mini
-def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: Optional[str] = None):
+def get_completion(db: Session, current_user: models.User, situation: str, inst: str, chatid: Optional[str] = None):
     situations = ["go shopping", "talk with friends", "travel", "learn alphabet", "airport"]
     actual_situation = situation
+    userid = current_user.user_id
     
     # random course인 경우 처리 (랜덤 상황 선택)
     if situation == "random course":
@@ -281,6 +282,7 @@ def get_completion(db: Session, userid: str, situation: str, inst: str, chatid: 
 
     return chatid, assistant_response, actual_situation
 
+
 @router.post("/chat", response_model=routes_schemas.ChatResponse)
 async def aichat(
     request: routes_schemas.ChatRequest,
@@ -289,7 +291,7 @@ async def aichat(
 ):
     chatid, response, actual_situation = get_completion(
         db,
-        request.user_id,
+        current_user,
         request.situation,
         request.message,
         request.chat_id

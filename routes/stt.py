@@ -27,7 +27,6 @@ client = OpenAI(api_key = OPENAI_API_KEY)
 def temporary_file(file: UploadFile):
     is_windows = platform.system() == 'Windows'
     
-    # Blob 데이터를 위한 기본 확장자 설정
     default_extension = '.webm'
     file_extension = os.path.splitext(file.filename)[1] if file.filename else default_extension
     
@@ -87,8 +86,7 @@ async def stt(file: UploadFile = File(...), current_user: models.User = Depends(
     content_type = file.content_type or ''
     allowed_content_types = {
         'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/mpga', 
-        'audio/m4a', 'audio/wav', 'audio/webm',
-        'video/mp4', 'video/webm'
+        'audio/m4a', 'audio/wav', 'audio/webm'
     }
     
     if content_type and content_type not in allowed_content_types:

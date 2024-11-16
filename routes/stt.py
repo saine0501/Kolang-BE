@@ -1,5 +1,3 @@
-# AI STT 기능 구현
-
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 import os
 import platform
@@ -29,10 +27,14 @@ client = OpenAI(api_key = OPENAI_API_KEY)
 def temporary_file(file: UploadFile):
     is_windows = platform.system() == 'Windows'
     
+    # Blob 데이터를 위한 기본 확장자 설정
+    default_extension = '.webm'
+    file_extension = os.path.splitext(file.filename)[1] if file.filename else default_extension
+    
     if is_windows:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
     else:
-        tmp = tempfile.NamedTemporaryFile(suffix=os.path.splitext(file.filename)[1])
+        tmp = tempfile.NamedTemporaryFile(suffix=file_extension)
     
     try:
         # 파일 저장
@@ -52,7 +54,6 @@ def temporary_file(file: UploadFile):
         
     finally:
         if is_windows:
-            # Windows인 경우 수동 파일 삭제
             try:
                 if os.path.exists(tmp.name):
                     os.unlink(tmp.name)
@@ -80,25 +81,29 @@ async def speech2text(file_path):
 
 @router.post("/speech2text")
 async def stt(file: UploadFile = File(...), current_user: models.User = Depends(get_current_user)):
-    if file.filename == '':
+    if not file.file:
         raise HTTPException(status_code=400, detail="음성 파일을 입력해주세요.")
+
+    content_type = file.content_type or ''
+    allowed_content_types = {
+        'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/mpga', 
+        'audio/m4a', 'audio/wav', 'audio/webm',
+        'video/mp4', 'video/webm'
+    }
     
-    # 파일 확장자 검사
-    allowed_extensions = {'.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm'}
-    file_ext = os.path.splitext(file.filename)[1].lower()
-    if file_ext not in allowed_extensions:
+    if content_type and content_type not in allowed_content_types:
         raise HTTPException(
             status_code=400,
-            detail=f"지원되지 않는 파일 형식입니다. 지원 형식: {', '.join(allowed_extensions)}"
+            detail=f"지원되지 않는 파일 형식입니다. 지원 형식: {', '.join(allowed_content_types)}"
         )
-
+    
     try:
         with temporary_file(file) as temp_path:
             result = await speech2text(temp_path)
             return {
                 "result": result,
                 "user_id": current_user.user_id
-                }
+            }
     except Exception as e:
         raise HTTPException(
             status_code=500,

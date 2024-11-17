@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 # chat.py
 
@@ -25,7 +25,7 @@ class ChatListResponse(BaseModel):
     user_id: str
     chat_id: str
     summary: str
-    feedback: Optional[datetime] = None
+    feedback: Optional[Dict[str, Any]] = None
     situation: str
     created_at: datetime
     completed_at: Optional[datetime] = None

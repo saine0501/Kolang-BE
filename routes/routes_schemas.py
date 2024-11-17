@@ -25,7 +25,7 @@ class ChatListResponse(BaseModel):
     user_id: str
     chat_id: str
     summary: str
-    feedback: str
+    feedback: Optional[datetime] = None
     situation: str
     created_at: datetime
     completed_at: Optional[datetime] = None

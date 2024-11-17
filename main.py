@@ -1,11 +1,10 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, APIRouter
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy.orm import Session
-from db.database import engine, get_db
-from db import models, schemas
+from db.database import engine
+from db import models
 
 from routes import chat, chatlist, stt, auth
 

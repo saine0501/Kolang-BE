@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
 from db.database import get_db
 from routes.routes_schemas import ChatListResponse, ChatDetailResponse
-from db.models import ChatList, Message, User
+from db.models import User
 from routes.auth import get_current_user
 from db import crud
 

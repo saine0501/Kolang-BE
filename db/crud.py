@@ -1,1 +1,43 @@
-# db의 crud 함수 정의
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from fastapi import HTTPException
+from typing import List, Optional
+
+from db.models import ChatList, Message, User
+from routes.routes_schemas import ChatDetailResponse
+
+# chatlist.py
+
+# 최근 채팅방 목록 조회
+def get_user_chats(db: Session, user_id: int, limit: int = 10) -> List[ChatList]:
+    chats = db.query(ChatList).filter(
+        ChatList.user_id == user_id
+    ).order_by(
+        desc(ChatList.created_at)
+    ).limit(limit).all()
+    
+    if not chats:
+        raise HTTPException(status_code=404, detail="No chats found")
+    
+    return chats
+
+def get_chat_detail(db: Session, chat_id: str, current_user: User) -> ChatDetailResponse:
+
+    # 채팅방 정보 조회 (chat_id)
+    chat = db.query(ChatList).filter(ChatList.chat_id == chat_id).first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="No chats found")
+    
+    # 메시지 내역 조회 (오름차순 정렬)
+    messages = db.query(Message).filter(
+        Message.chat_id == chat_id
+    ).order_by(
+        Message.created_at
+    ).all()
+    
+    return ChatDetailResponse(
+        user_id=current_user.user_id,
+        chat_id=chat.chat_id,
+        summary=chat.summary,
+        messages=messages if messages else []
+    )

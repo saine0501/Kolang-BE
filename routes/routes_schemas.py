@@ -17,7 +17,16 @@ class ChatResponse(BaseModel):
     chat_id: str
     response: str
     situation: str
-    
+
+# stc.py
+
+class STCResponse(BaseModel):
+    user_id: str
+    chat_id: str
+    message: str
+    response: str
+    situation: str
+
 # chatlist.py
 
 # ChatList Response 모델 (채팅방 조회)

@@ -6,7 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from db.database import engine
 from db import models
 
-from routes import chat, chatlist, stt, auth
+from routes import chat, chatlist, stc, auth
 
 env_state = os.getenv("ENV_STATE", "dev")
 env_file = ".env.prod" if env_state == "prod" else ".env.dev"
@@ -43,6 +43,6 @@ async def read_root():
     return {"Hello" : "World"}
 
 app.include_router(chatlist.router)
-app.include_router(stt.router)
+app.include_router(stc.router)
 app.include_router(chat.router)
 app.include_router(auth.router)

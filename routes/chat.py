@@ -34,10 +34,10 @@ FEEDBACK_PATH = os.environ.get('FEEDBACK_PATH')
 
 # 상황 별 프롬프트 파일 매핑
 SITUATION_PROMPTS = {
-    "go shopping": "shopping.txt",
-    "talk with friends": "friend.txt",
+    "go-shopping": "shopping.txt",
+    "talk-with-friends": "friend.txt",
     "travel": "travel.txt",
-    "learn alphabet": "alphabet.txt",
+    "learn-alphabet": "alphabet.txt",
     "airport": "airport.txt"
 }
 
@@ -174,12 +174,12 @@ def generate_summary_and_feedback(db: Session, chat_id: str) -> Tuple[str, dict]
 
 # Chat 모델 : OpenAI 4o-mini
 def get_completion(db: Session, current_user: models.User, situation: str, inst: str, chatid: Optional[str] = None):
-    situations = ["go shopping", "talk with friends", "travel", "learn alphabet", "airport"]
+    situations = ["go-shopping", "talk-with-friends", "travel", "learn-alphabet", "airport"]
     actual_situation = situation
     userid = current_user.user_id
     
     # random course인 경우 처리 (랜덤 상황 선택)
-    if situation == "random course":
+    if situation == "random-course":
         if chatid:
             chat = db.query(models.ChatList).filter(models.ChatList.chat_id == chatid).first()
             if chat:

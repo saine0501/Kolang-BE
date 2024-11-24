@@ -15,7 +15,8 @@ from string import Template
 
 from db.database import get_db
 from db import models
-from routes.routes_schemas import STCResponse
+from db.crud import *
+from routes.schemas import STCResponse
 from routes.auth import get_current_user
 
 logging.basicConfig(level=logging.INFO,
@@ -99,22 +100,6 @@ SITUATION_PROMPTS = {
     "learn-alphabet": "alphabet.txt",
     "airport": "airport.txt"
 }
-
-# 온보딩 정보 불러오기
-def get_user_onboarding(db: Session, userid: str):
-    user = db.query(models.User).filter(models.User.user_id == userid).first()
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="사용자 정보가 없습니다."
-        )
-    if not user.onboarding or not user.onboarding_info:
-        raise HTTPException(
-            status_code=400,
-            detail="사용자의 온보딩 정보를 불러올 수 없습니다."
-        )
-    
-    return user.onboarding_info
 
 # 상황 별 prompt 불러오기
 def read_situation_prompt(situation: str, level: str, purpose: str, age: str) -> str:

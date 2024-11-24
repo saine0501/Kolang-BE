@@ -3,8 +3,27 @@ from sqlalchemy import desc
 from fastapi import HTTPException
 from typing import List
 
+from db import models
 from db.models import ChatList, Message, User
-from routes.routes_schemas import ChatDetailResponse
+from routes.schemas import ChatDetailResponse
+
+# chat.py + stc.py
+
+# 온보딩 정보 불러오기
+def get_user_onboarding(db: Session, userid: str):
+    user = db.query(User).filter(User.user_id == userid).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="사용자 정보가 없습니다."
+        )
+    if not user.onboarding or not user.onboarding_info:
+        raise HTTPException(
+            status_code=400,
+            detail="사용자의 온보딩 정보를 불러올 수 없습니다."
+        )
+    
+    return user.onboarding_info
 
 
 

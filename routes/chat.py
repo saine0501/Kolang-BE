@@ -14,7 +14,8 @@ from string import Template
 
 from db.database import get_db
 from db import models
-from routes import routes_schemas
+from db.crud import *
+from routes import schemas
 from routes.auth import get_current_user
 
 router = APIRouter(
@@ -42,22 +43,6 @@ SITUATION_PROMPTS = {
 }
 
 client = OpenAI(api_key = OPENAI_API_KEY)
-
-# 온보딩 정보 불러오기
-def get_user_onboarding(db: Session, userid: str):
-    user = db.query(models.User).filter(models.User.user_id == userid).first()
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="사용자 정보가 없습니다."
-        )
-    if not user.onboarding or not user.onboarding_info:
-        raise HTTPException(
-            status_code=400,
-            detail="사용자의 온보딩 정보를 불러올 수 없습니다."
-        )
-    
-    return user.onboarding_info
 
 # 상황 별 prompt 불러오기
 def read_situation_prompt(situation: str, level: str, purpose: str, age: str) -> str:
@@ -283,9 +268,9 @@ def get_completion(db: Session, current_user: models.User, situation: str, inst:
     return chatid, assistant_response, actual_situation
 
 
-@router.post("/chat", response_model=routes_schemas.ChatResponse)
+@router.post("/chat", response_model=schemas.ChatResponse)
 async def aichat(
-    request: routes_schemas.ChatRequest,
+    request: schemas.ChatRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -297,7 +282,7 @@ async def aichat(
         request.chat_id
     )
     
-    return routes_schemas.ChatResponse(
+    return schemas.ChatResponse(
         user_id=current_user.user_id,
         chat_id=chatid,
         response=response,

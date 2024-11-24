@@ -15,7 +15,7 @@ import uuid
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from fastapi.responses import RedirectResponse
-from routes.routes_schemas import OnboardingRequest
+from routes.schemas import OnboardingRequest
 
 # 환경 변수 설정
 env_state = os.getenv("ENV_STATE", "dev")

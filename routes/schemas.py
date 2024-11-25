@@ -57,6 +57,7 @@ class MessageResponse(BaseModel):
 class ChatDetailResponse(BaseModel):
     user_id: str
     chat_id: str
+    situation: str
     summary: str
     messages: List[MessageResponse]
     

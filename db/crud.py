@@ -59,6 +59,7 @@ def get_chat_detail(db: Session, chat_id: str, current_user: User) -> ChatDetail
     return ChatDetailResponse(
         user_id=current_user.user_id,
         chat_id=chat.chat_id,
+        situation=chat.situation,
         summary=chat.summary,
         messages=messages if messages else []
     )

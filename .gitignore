@@ -4,6 +4,7 @@
 data.py
 test.py
 file
+.DS_Store
 
 ### dotenv ###
 .env

@@ -3,7 +3,6 @@ from sqlalchemy import desc
 from fastapi import HTTPException
 from typing import List
 
-from db import models
 from db.models import ChatList, Message, User
 from routes.schemas import ChatDetailResponse
 

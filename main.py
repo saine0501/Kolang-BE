@@ -26,8 +26,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # 명시적으로 메소드 지정
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.add_middleware(

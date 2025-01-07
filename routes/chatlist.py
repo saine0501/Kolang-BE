@@ -12,7 +12,7 @@ router = APIRouter(
     tags=["Chatlist"]
 )
 
-@router.get("/", response_model=List[ChatListResponse], description="채팅방 내역 조회")
+@router.get("", response_model=List[ChatListResponse], description="채팅방 내역 조회")
 async def get_user_chats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

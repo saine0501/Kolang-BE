@@ -83,7 +83,7 @@ async def speech2text(file_path):
                 model="whisper-1",
                 file=audio_file,
                 language="ko",
-                temperature=0
+                temperature=0.0,
             )
             return transcription.text
     except Exception as e:

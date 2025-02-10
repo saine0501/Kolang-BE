@@ -26,7 +26,7 @@ jiter==0.6.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.1
 mdurl==0.1.2
-openai==1.51.2
+openai==1.6.1
 orjson==3.10.7
 pyasn1==0.6.1
 pycparser==2.22

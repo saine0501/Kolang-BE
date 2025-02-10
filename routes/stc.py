@@ -293,7 +293,11 @@ def get_completion(db: Session, current_user: models.User, situation: str, inst:
     except json.JSONDecodeError:
         is_conversation_end = False
         assistant_response = "응답을 처리할 수 없습니다."
-
+    
+    # 대화 메시지 수가 2개 이하면 종료 조건 무시 (초기 대화 시 종료 에러 방지)
+    if is_conversation_end and len(chat_messages) < 2:
+        is_conversation_end = False
+    
     # 사용자 메시지 저장
     user_message = models.Message(
         chat_id=chatid,
@@ -362,7 +366,7 @@ async def speechtochat(
             response=assistant_response,  # Chat 응답
             situation=actual_situation
         )
-                     
+
     except Exception as e:
         logger.error(f"Error processing file: {str(e)}", exc_info=True)
         raise HTTPException(
